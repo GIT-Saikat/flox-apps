@@ -1,159 +1,124 @@
-# Turborepo starter
+# Flox Apps
 
-This Turborepo starter is maintained by the Turborepo core team.
+Flox Apps is a Bun-managed Turborepo containing the web application, TypeScript
+services, a Python FastAPI agent service, and shared packages.
 
-## Using this example
+## Repository layout
 
-Run the following command:
-
-```sh
-npx create-turbo@latest
+```text
+apps/
+	agent/       Python FastAPI service managed with uv
+	backend/     TypeScript/Bun backend service
+	web/         Next.js web application
+packages/
+	db/          Prisma client and PostgreSQL configuration
+	ui/          Shared React UI components
+	eslint-config/
+	typescript-config/
 ```
 
-## What's inside?
+The `backend` and database entry points are currently minimal Bun/TypeScript
+services. The implemented agent service is the Python application in
+`apps/agent`.
 
-This Turborepo includes the following packages/apps:
+## Prerequisites
 
-### Apps and Packages
+- Bun 1.4 or later
+- Python 3.14 or later
+- [uv](https://docs.astral.sh/uv/)
+- PostgreSQL, when using the database package
 
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `@next/eslint-plugin-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
+The root workspace uses Bun. The agent has its own Python environment and lock
+file, so JavaScript and Python dependencies are installed separately.
 
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
+## Installation
 
-### Utilities
-
-This Turborepo has some additional tools already setup for you:
-
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
-
-### Build
-
-To build all apps and packages, run the following command:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
+From the repository root:
 
 ```sh
-cd my-turborepo
-turbo build
+bun install
+cd apps/agent
+uv sync
+cd ../..
 ```
 
-Without global `turbo`, use your package manager:
+If `bun` resolves to a Windows executable while working in a Linux environment,
+install and use the native Linux Bun binary. Verify with:
 
 ```sh
-cd my-turborepo
-npx turbo build
-bun exec turbo build
-bun exec turbo build
+which bun
+bun --version
 ```
 
-You can build a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
+## Development
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
+Start the Next.js web application:
 
 ```sh
-turbo build --filter=docs
+bun run dev
 ```
 
-Without global `turbo`:
+The web application is available at [http://localhost:3000](http://localhost:3000).
+
+Start the FastAPI agent in a second terminal:
 
 ```sh
-npx turbo build --filter=docs
-bun exec turbo build --filter=docs
-bun exec turbo build --filter=docs
+cd apps/agent
+uv run fastapi dev main.py
 ```
 
-### Develop
+The agent currently exposes the FastAPI application defined in
+`apps/agent/main.py`.
 
-To develop all apps and packages, run the following command:
+## Checks and builds
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
+Run the repository tasks through Turborepo:
 
 ```sh
-cd my-turborepo
-turbo dev
+bun run build
+bun run lint
+bun run check-types
 ```
 
-Without global `turbo`, use your package manager:
+Format TypeScript, TSX, and Markdown files with:
 
 ```sh
-cd my-turborepo
-npx turbo dev
-bun exec turbo dev
-bun exec turbo dev
+bun run format
 ```
 
-You can develop a specific package by using a [filter](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters):
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
+For a web-only task, use the workspace filter:
 
 ```sh
-turbo dev --filter=web
+bun run --filter web build
+bun run --filter web lint
+bun run --filter web check-types
 ```
 
-Without global `turbo`:
+Python dependencies can be checked from the agent directory with:
 
 ```sh
-npx turbo dev --filter=web
-bun exec turbo dev --filter=web
-bun exec turbo dev --filter=web
+cd apps/agent
+uv run python -m compileall main.py
 ```
 
-### Remote Caching
+## Database
 
-> [!TIP]
-> Vercel Remote Cache is free for all plans. Get started today at [vercel.com](https://vercel.com/signup?utm_source=remote-cache-sdk&utm_campaign=free_remote_cache).
+The database package uses Prisma 7 with PostgreSQL. Its schema is in
+`packages/db/prisma/schema.prisma`, and the generated client is configured for
+`packages/db/generated/prisma`.
 
-Turborepo can use a technique known as [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
+Configure the PostgreSQL connection required by your Prisma setup before
+running database commands. Prisma commands should be run from `packages/db`.
 
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup?utm_source=turborepo-examples), then enter the following commands:
+## Workspace commands
 
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed (recommended):
+The root `package.json` provides these scripts:
 
-```sh
-cd my-turborepo
-turbo login
-```
+- `bun run dev` runs the Turbo development task.
+- `bun run build` builds packages with a `build` task.
+- `bun run lint` runs lint tasks.
+- `bun run check-types` runs TypeScript type checks.
+- `bun run format` formats TypeScript, TSX, and Markdown files.
 
-Without global `turbo`, use your package manager:
-
-```sh
-cd my-turborepo
-npx turbo login
-bun exec turbo login
-bun exec turbo login
-```
-
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
-
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
-
-With [global `turbo`](https://turborepo.dev/docs/getting-started/installation#global-installation) installed:
-
-```sh
-turbo link
-```
-
-Without global `turbo`:
-
-```sh
-npx turbo link
-bun exec turbo link
-bun exec turbo link
-```
-
-## Useful Links
-
-Learn more about the power of Turborepo:
-
-- [Tasks](https://turborepo.dev/docs/crafting-your-repository/running-tasks)
-- [Caching](https://turborepo.dev/docs/crafting-your-repository/caching)
-- [Remote Caching](https://turborepo.dev/docs/core-concepts/remote-caching)
-- [Filtering](https://turborepo.dev/docs/crafting-your-repository/running-tasks#using-filters)
-- [Configuration Options](https://turborepo.dev/docs/reference/configuration)
-- [CLI Usage](https://turborepo.dev/docs/reference/command-line-reference)
+Turbo task configuration is in `turbo.json`. The Python agent is intentionally
+run with `uv` because it is not a Bun workspace package.
